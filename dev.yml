@@ -1,0 +1,53 @@
+trigger: none
+
+pool: arubagentpool
+
+stages:
+  - stage: precommit
+    jobs:
+      - job: precommitjob
+
+        steps:
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: '1.14.3'
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/enviroment/dev'
+            backendServiceArm: 'arub-connection'
+            backendAzureRmStorageAccountName: 'arubstorage2'
+            backendAzureRmContainerName: 'arubcontainer2'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+
+
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/enviroment/dev'
+
+    
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'custom'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/enviroment/dev'
+            outputTo: 'console'
+            customCommand: 'fmt'
+            environmentServiceNameAzureRM: 'arub-connection'
+
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/enviroment/dev'
+            environmentServiceNameAzureRM: 'arub-connection'
+
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/enviroment/dev'
+            environmentServiceNameAzureRM: 'arub-connection'
